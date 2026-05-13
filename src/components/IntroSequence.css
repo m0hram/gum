@@ -1,0 +1,156 @@
+.intro-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.intro-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  will-change: transform;
+}
+
+/* Pure black overlay for cinematic dimming */
+.intro-dim-overlay {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* WELCOME wrapper */
+.intro-welcome-wrapper {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.intro-vignette {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at center, transparent 30%, rgba(0, 0, 0, 0.8) 100%),
+    linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.95) 100%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.intro-welcome-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0;
+}
+
+.intro-welcome-line1 {
+  font-family: 'Bebas Neue', 'Oswald', sans-serif;
+  font-size: clamp(6rem, 18vw, 15rem);
+  letter-spacing: 0.08em;
+  color: #ffffff;
+  text-shadow: 0 0 50px rgba(255, 26, 26, 0.6), 0 0 100px rgba(255, 26, 26, 0.3);
+  line-height: 0.85;
+  display: block;
+  font-weight: 400;
+  margin-left: 0.08em;
+  /* offset for letter spacing centering */
+}
+
+.intro-welcome-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(0.75rem, 1.2vw, 1.1rem);
+  letter-spacing: 0.8em;
+  color: rgba(255, 255, 255, 0.85);
+  /* Changed to white for better contrast */
+  text-transform: uppercase;
+  font-weight: 500;
+  display: block;
+  margin-top: 1.5rem;
+  margin-left: 0.8em;
+  text-shadow: 0 0 12px rgba(255, 26, 26, 0.6);
+}
+
+/* Scroll Indicator */
+.scroll-indicator {
+  position: absolute;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.scroll-indicator span {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.mouse {
+  width: 24px;
+  height: 38px;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  display: flex;
+  justify-content: center;
+  padding-top: 8px;
+  animation: mouseFloat 2s ease-in-out infinite;
+}
+
+.wheel {
+  width: 3px;
+  height: 6px;
+  background: rgba(255, 26, 26, 0.8);
+  border-radius: 3px;
+  animation: wheelScroll 2s ease-in-out infinite;
+}
+
+@keyframes mouseFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  50% {
+    transform: translateY(4px);
+    opacity: 0.7;
+  }
+}
+
+@keyframes wheelScroll {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+
+  80% {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+}

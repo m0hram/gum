@@ -1,0 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@300;400;500;600;700&family=Montserrat:wght@200;300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --color-bg:           #030303;
+  --color-text:         #f0f0f0;
+  --color-accent:       #e61919;
+  --color-accent-glow:  rgba(230, 25, 25, 0.5);
+  --color-text-muted:   #7a7a7a;
+  --font-heading:       'Bebas Neue', 'Oswald', sans-serif;
+  --font-body:          'Inter', sans-serif;
+  --font-display:       'Bebas Neue', 'Oswald', sans-serif;
+}
+
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: auto; /* Lenis handles smooth scroll */
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  -webkit-font-smoothing:  antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4, .font-heading {
+  font-family: var(--font-heading);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 0.95;
+}
+
+img, video {
+  display: block;
+  max-width: 100%;
+  /* High-quality photo rendering — browser bilinear/bicubic interpolation */
+  image-rendering: auto;
+  -ms-interpolation-mode: bicubic;
+}
+
+/* Canvas — GPU-accelerated composite layer */
+canvas {
+  display: block;
+  image-rendering: auto;
+  transform: translateZ(0);
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  outline: none;
+}
+
+a { text-decoration: none; }
+
+/* Custom scrollbar */
+::-webkit-scrollbar       { width: 5px; }
+::-webkit-scrollbar-track { background: #000; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #ff1a1a; }

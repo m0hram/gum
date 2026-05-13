@@ -1,0 +1,161 @@
+.ds-container {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+.ds-gl-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* ── CSS Chromatic Aberration ── */
+.ds-chromatic {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  box-shadow:
+    -2px 0 10px 0 rgba(255,0,0,0.12),
+     2px 0 10px 0 rgba(0,0,255,0.06);
+  animation: chromaPulse 4s ease-in-out infinite;
+}
+
+@keyframes chromaPulse {
+  0%,100% { opacity: 0.5; }
+  50%     { opacity: 1.0; }
+}
+
+/* ── Vignette ── */
+.ds-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 50%,
+    transparent 35%,
+    rgba(0,0,0,0.55) 70%,
+    rgba(0,0,0,0.95) 100%
+  );
+}
+
+/* ── Kinetic Text Stage ── */
+.ds-text-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2rem;
+  pointer-events: none;
+}
+
+/* Ambient glow behind text */
+.ds-text-stage::before {
+  content: '';
+  position: absolute;
+  width: 60vw; height: 60vh;
+  background: radial-gradient(ellipse at center, rgba(255,26,26,0.07) 0%, transparent 70%);
+  pointer-events: none;
+  animation: dsBreathe 5s ease-in-out infinite;
+}
+
+@keyframes dsBreathe {
+  0%,100% { opacity: 0.5; }
+  50%     { opacity: 0.8; }
+}
+
+/* Eyebrow */
+.ds-eyebrow {
+  font-family: var(--font-body);
+  font-size: 0.65rem;
+  font-weight: 600;
+  letter-spacing: 0.55em;
+  color: rgba(255,26,26,0.8);
+  text-transform: uppercase;
+  margin-bottom: 1.8rem;
+  opacity: 0;
+}
+
+/* Divider */
+.ds-divider {
+  width: 80px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #ff1a1a, transparent);
+  margin: 0 auto 2.2rem;
+  transform-origin: center;
+  box-shadow: 0 0 15px rgba(255,26,26,0.6), 0 0 40px rgba(255,26,26,0.2);
+}
+
+/* THE SYSTEM — white */
+.ds-line1 {
+  font-family: var(--font-heading);
+  font-size: clamp(4.5rem, 11vw, 12rem);
+  font-weight: 400;
+  line-height: 0.88;
+  text-transform: uppercase;
+  margin: 0;
+  letter-spacing: 0.18em;
+  background: linear-gradient(to bottom, #ffffff 0%, #cccccc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(255,255,255,0.08); /* Replaced heavy filter */
+  opacity: 0;
+}
+
+/* AWAKENS — red fire */
+.ds-line2 {
+  font-family: var(--font-heading);
+  font-size: clamp(4.5rem, 11vw, 12rem);
+  font-weight: 400;
+  line-height: 0.88;
+  text-transform: uppercase;
+  margin: 0 0 2.5rem;
+  letter-spacing: 0.15em;
+  background: linear-gradient(to bottom right, #ff7070 0%, #ff1a1a 40%, #8b0000 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(255,26,26,0.55), 0 0 80px rgba(255,26,26,0.2); /* Replaced heavy filter */
+  opacity: 0;
+}
+
+/* Sub text */
+.ds-sub {
+  font-family: var(--font-body);
+  font-size: clamp(0.8rem, 1.4vw, 1rem);
+  font-weight: 300;
+  letter-spacing: 0.2em;
+  line-height: 2;
+  color: rgba(200,200,200,0.65);
+  text-transform: uppercase;
+  max-width: 520px;
+  opacity: 0;
+}
+
+/* ── Luxury Corner Brackets ── */
+.ds-corner {
+  position: absolute;
+  z-index: 15;
+  width: 40px; height: 40px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+}
+
+.ds-corner--tl { top: 28px;    left: 28px;  border-top: 1px solid rgba(255,26,26,0.45); border-left: 1px solid rgba(255,26,26,0.45); }
+.ds-corner--tr { top: 28px;    right: 28px; border-top: 1px solid rgba(255,26,26,0.45); border-right: 1px solid rgba(255,26,26,0.45); }
+.ds-corner--bl { bottom: 28px; left: 28px;  border-bottom: 1px solid rgba(255,26,26,0.45); border-left: 1px solid rgba(255,26,26,0.45); }
+.ds-corner--br { bottom: 28px; right: 28px; border-bottom: 1px solid rgba(255,26,26,0.45); border-right: 1px solid rgba(255,26,26,0.45); }
