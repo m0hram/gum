@@ -25,39 +25,39 @@ const CinematicSequence = ({
   titleAccent,
   desc,
   textAt = 5.5,
-  fadeOutAt,
+  textFadeOutAt,
   showFromStart = false,
   scrollHint = false,
   loadDelay = 0,      // ms to wait before starting frame loads
+  fadeOutAtEnd = false, // Fade to black at the end of the timeline
 }) => {
   const containerRef = useRef(null);
-  const canvasRef    = useRef(null);
-  const frameRef     = useRef({ index: 0 });
-  const dirtyRef     = useRef(false);
-  const rafRef       = useRef(null);
-  const activeRef    = useRef(true);
-  const imgCacheRef  = useRef([]);
+  const canvasRef = useRef(null);
+  const frameRef = useRef({ index: 0 });
+  const dirtyRef = useRef(false);
+  const rafRef = useRef(null);
+  const activeRef = useRef(true);
+  const imgCacheRef = useRef([]);
 
   const EFFECTIVE = Math.ceil(frameCount / step);
 
   useEffect(() => {
-    const canvas    = canvasRef.current;
+    const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
     imgCacheRef.current = new Array(EFFECTIVE).fill(null);
     const imgCache = imgCacheRef.current;
 
-    const ctx = canvas.getContext('2d', { alpha: true });
+    const ctx = canvas.getContext('2d', { alpha: false });
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = 'high';
 
     // ── Resize ──────────────────────────────────────────────
     function resize() {
       const dpr = window.devicePixelRatio || 1;
-      canvas.width  = window.innerWidth  * dpr;
+      canvas.width = window.innerWidth * dpr;
       canvas.height = window.innerHeight * dpr;
-      canvas.style.width  = window.innerWidth  + 'px';
+      canvas.style.width = window.innerWidth + 'px';
       canvas.style.height = window.innerHeight + 'px';
       ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.scale(dpr, dpr);
@@ -93,8 +93,16 @@ const CinematicSequence = ({
     function load(i) {
       if (i < 0 || i >= EFFECTIVE || imgCache[i]) return;
       const im = new Image();
-      im.onload  = () => { imgCache[i] = im; dirtyRef.current = true; };
-      im.onerror = () => {};
+      im.onload = () => {
+        imgCache[i] = im;
+        dirtyRef.current = true;
+        // Force redraw if loop is inactive so late frames (like the zoom) appear!
+        if (!activeRef.current) {
+          const fi = Math.max(0, Math.min(EFFECTIVE - 1, Math.floor(frameRef.current.index)));
+          if (Math.abs(fi - i) < 15) draw();
+        }
+      };
+      im.onerror = () => { };
       im.src = `/${folder}/frame_${(i * step).toString().padStart(5, '0')}.${ext}`;
       imgCache[i] = im;
     }
@@ -110,27 +118,31 @@ const CinematicSequence = ({
     const gCtx = gsap.context(() => {
       const tl = gsap.timeline({
         scrollTrigger: {
-          trigger: document.body,
           scroller: document.documentElement,
-          start: () => `+=${window.innerHeight * startVh}`,
-          end:   () => `+=${window.innerHeight * endVh}`,
-          scrub: 0.8,
+          start: () => window.innerHeight * startVh,
+          end: () => window.innerHeight * endVh,
+          scrub: 1.5,
           invalidateOnRefresh: true,
-          onEnter:     () => { activeRef.current = true;  if (!rafRef.current) rafRef.current = requestAnimationFrame(loop); },
-          onLeave:     () => { activeRef.current = false; },
-          onEnterBack: () => { activeRef.current = true;  if (!rafRef.current) rafRef.current = requestAnimationFrame(loop); },
+          onEnter: () => { activeRef.current = true; if (!rafRef.current) rafRef.current = requestAnimationFrame(loop); },
+          onLeave: () => { activeRef.current = false; },
+          onEnterBack: () => { activeRef.current = true; if (!rafRef.current) rafRef.current = requestAnimationFrame(loop); },
           onLeaveBack: () => { activeRef.current = false; },
-          onUpdate:    () => { dirtyRef.current = true; },
+          onUpdate: () => { dirtyRef.current = true; },
         },
       });
 
       // Fade in container (unless first sequence)
       if (!showFromStart) {
-        tl.to(container, { opacity: 1, duration: 1.5, ease: 'power2.inOut' }, 0);
+        tl.to(container, { opacity: 1, duration: 0.5, ease: 'power2.inOut' }, 0);
       }
 
       // Scrub frames
       tl.to(frameRef.current, { index: EFFECTIVE - 1, ease: 'none', duration: 10 }, 0);
+
+      // Fade out container at the end if requested
+      if (fadeOutAtEnd) {
+        tl.to(container, { opacity: 0, duration: 1.0, ease: 'power2.inOut' }, 9.0);
+      }
 
       // Scroll hint fades out immediately
       if (scrollHint) {
@@ -140,16 +152,31 @@ const CinematicSequence = ({
       // Text overlay — only if textAt is within timeline range (< 9)
       // textAt >= 9 means "no text" (e.g. textAt=100 disables text safely)
       if (textAt < 9) {
-        tl.set('.cin-copy', { autoAlpha: 0 }, 0);
-        tl.to('.cin-copy',      { autoAlpha: 1, duration: 0.3, ease: 'none' },                                  textAt);
-        tl.fromTo('.cin-eyebrow', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1.4,  ease: 'power3.out',  immediateRender: false }, textAt + 0.15);
-        tl.fromTo('.cin-title',   { opacity: 0, y: 50 }, { opacity: 1, y: 0, duration: 1.85, ease: 'expo.out',    immediateRender: false }, textAt + 0.35);
-        tl.fromTo('.cin-desc',    { opacity: 0, y: 24 }, { opacity: 1, y: 0, duration: 1.75, ease: 'power3.out',  immediateRender: false }, textAt + 0.65);
+        tl.to('.cin-copy', { autoAlpha: 1, duration: 0.3, ease: 'none' }, textAt);
+        
+        // WOW Animations: come from right, skewed, scaling down - SLOWED DOWN
+        tl.fromTo('.cin-eyebrow', 
+          { opacity: 0, x: 100, letterSpacing: '0em' }, 
+          { opacity: 1, x: 0, letterSpacing: '0.45em', duration: 3.5, ease: 'power4.out' }, 
+          textAt + 0.2
+        );
+        
+        tl.fromTo('.cin-title', 
+          { opacity: 0, x: 150, scale: 1.2, skewX: 15 }, 
+          { opacity: 1, x: 0, scale: 1, skewX: 0, duration: 4.5, ease: 'expo.out' }, 
+          textAt + 0.8
+        );
+        
+        tl.fromTo('.cin-desc', 
+          { opacity: 0, x: 80, y: 30 }, 
+          { opacity: 1, x: 0, y: 0, duration: 3.5, ease: 'back.out(1.2)' }, 
+          textAt + 1.8
+        );
       }
 
-      // Optional fade-out (only if within timeline range)
-      if (fadeOutAt != null && fadeOutAt < 10) {
-        tl.to(container, { opacity: 0, duration: 1.2, ease: 'power2.inOut' }, fadeOutAt);
+      // Fade out text specifically before next sequence starts
+      if (textFadeOutAt != null && textFadeOutAt < 10) {
+        tl.to('.cin-copy', { autoAlpha: 0, duration: 0.8, ease: 'power2.inOut' }, textFadeOutAt);
       }
     }, container);
 
