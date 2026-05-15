@@ -103,8 +103,7 @@ const CinematicSequence = ({
         }
       };
       im.onerror = () => { };
-      const supabaseBase = 'https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images';
-      im.src = `${supabaseBase}/${folder}/frame_${(i * step).toString().padStart(5, '0')}.${ext}`;
+      im.src = `/${folder}/frame_${(i * step).toString().padStart(5, '0')}.${ext}`;
       imgCache[i] = im;
     }
 

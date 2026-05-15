@@ -58,7 +58,7 @@ export default function LoadingScreen({ onComplete }) {
     // Preload images
     for (let i = 0; i < frameCount; i++) {
       const img = new Image();
-      img.src = `https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/loading/frame_${i.toString().padStart(5, '0')}.webp`;
+      img.src = `/لودنج/frame_${i.toString().padStart(5, '0')}.webp`;
       img.onload = () => {
         images[i] = img;
         framesLoaded++;
