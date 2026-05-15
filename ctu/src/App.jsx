@@ -287,7 +287,7 @@ function App() {
             {/* ── Sequence 1: الاول ─────────────── */}
             <div style={{ position: 'absolute', inset: 0, zIndex: 1 }}>
               <CinematicSequence
-                folder="الاول"
+                folder="part1"
                 frameCount={171}
                 ext="webp"
                 step={1}
@@ -304,7 +304,7 @@ function App() {
             {/* ── Sequence 2: التاني ─────────────── */}
             <div style={{ position: 'absolute', inset: 0, zIndex: 2 }}>
               <CinematicSequence
-                folder="التاني"
+                folder="part2"
                 frameCount={151}
                 ext="webp"
                 step={1}
@@ -324,7 +324,7 @@ function App() {
             {/* ── Sequence 3: الثالث ─────────────── */}
             <div style={{ position: 'absolute', inset: 0, zIndex: 3 }}>
               <CinematicSequence
-                folder="الثالث"
+                folder="part3"
                 frameCount={128}
                 ext="webp"
                 step={1}
@@ -345,7 +345,7 @@ function App() {
             <div style={{ position: 'absolute', inset: 0, zIndex: 4, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <div style={{ position: 'absolute', inset: 0, zIndex: -1 }}>
                 <CinematicSequence
-                  folder="الرابع"
+                  folder="part4"
                   frameCount={120}
                   ext="webp"
                   step={1}
@@ -383,8 +383,8 @@ function App() {
             {/* ── Sequence 5: Transformation (Skinny to Huge) ─────────────── */}
             <div className="seq5-container" style={{ position: 'absolute', inset: 0, zIndex: 5, backgroundColor: '#000' }}>
               <div style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img className="seq5-skinny" src="/2.png" alt="Skinny Before" style={{ position: 'absolute', height: '100%', objectFit: 'contain' }} />
-                <img className="seq5-huge" src="/1.png" alt="Huge After" style={{ position: 'absolute', height: '100%', objectFit: 'contain' }} />
+                <img className="seq5-skinny" src="https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/2.png" alt="Skinny Before" style={{ position: 'absolute', height: '100%', objectFit: 'contain' }} />
+                <img className="seq5-huge" src="https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/1.png" alt="Huge After" style={{ position: 'absolute', height: '100%', objectFit: 'contain' }} />
                 
                 {/* Text overlay for Sequence 5 */}
                 <div style={{ position: 'absolute', bottom: '10%', left: '5%', zIndex: 10 }}>

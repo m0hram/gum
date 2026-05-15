@@ -103,13 +103,29 @@ const CinematicSequence = ({
         }
       };
       im.onerror = () => { };
-      im.src = `/${folder}/frame_${(i * step).toString().padStart(5, '0')}.${ext}`;
+      const supabaseBase = 'https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images';
+      im.src = `${supabaseBase}/${folder}/frame_${(i * step).toString().padStart(5, '0')}.${ext}`;
       imgCache[i] = im;
     }
 
-    // Load ALL frames — delayed start so seq1 gets bandwidth priority
+    // Load frames intelligently to avoid network congestion
     const startLoading = () => {
-      for (let i = 0; i < EFFECTIVE; i++) load(i);
+      // Load the very first frame immediately so the canvas isn't empty
+      load(0);
+      
+      let currentIdx = 1;
+      const loadNextBatch = () => {
+        if (currentIdx >= EFFECTIVE) return;
+        const batchSize = activeRef.current ? 15 : 5; // Load faster if currently scrolling this sequence
+        const end = Math.min(currentIdx + batchSize, EFFECTIVE);
+        for (let i = currentIdx; i < end; i++) {
+          load(i);
+        }
+        currentIdx = end;
+        setTimeout(loadNextBatch, 300); // 300ms pause between batches to breathe
+      };
+      // Start batch loading a bit later
+      setTimeout(loadNextBatch, 500);
     };
     if (loadDelay > 0) setTimeout(startLoading, loadDelay);
     else startLoading();

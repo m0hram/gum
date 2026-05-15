@@ -58,7 +58,7 @@ export default function LoadingScreen({ onComplete }) {
     // Preload images
     for (let i = 0; i < frameCount; i++) {
       const img = new Image();
-      img.src = `/لودنج/frame_${i.toString().padStart(5, '0')}.webp`;
+      img.src = `https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/loading/frame_${i.toString().padStart(5, '0')}.webp`;
       img.onload = () => {
         images[i] = img;
         framesLoaded++;
@@ -68,9 +68,8 @@ export default function LoadingScreen({ onComplete }) {
            drawFrame(ctx, images[0], canvas.width, canvas.height);
         }
         
-        // Start playing when we have buffered a good amount of frames
-        // e.g. 15 frames buffer to ensure smooth initial playback
-        if (framesLoaded === 15 && !playing) {
+        // Start playing when we have buffered just 3 frames (so it doesn't wait forever on slow networks)
+        if (framesLoaded === 3 && !playing) {
            playing = true;
            reqId = requestAnimationFrame(playLoop);
         }
@@ -81,7 +80,7 @@ export default function LoadingScreen({ onComplete }) {
       };
     }
     
-    // Fallback: If 15 frames don't load fast enough, start playing anyway after 1.5s
+    // Fallback: If 3 frames don't load fast enough, start playing anyway after 1.5s
     const fallbackTimeout = setTimeout(() => {
       if (!playing) {
         playing = true;
