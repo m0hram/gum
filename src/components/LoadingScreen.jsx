@@ -1,129 +1,115 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export default function LoadingScreen({ onComplete }) {
-  const canvasRef = useRef(null);
+  const [progress, setProgress] = useState(0);
+  const [isReady, setIsReady] = useState(false);
   const [isFadingOut, setIsFadingOut] = useState(false);
-  const frameCount = 120;
-  const fps = 30; // Adjust for playback speed (30fps = 4 seconds total)
 
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
+    // Preload the first 35 frames of the first sequence (part1) to ensure smooth start
+    const framesToPreload = 35;
+    let loadedCount = 0;
     
-    // Resize handling to ensure fullscreen cover
-    const resize = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    };
-    window.addEventListener('resize', resize);
-    resize();
+    let isPreloadingDone = false;
 
-    const images = new Array(frameCount);
-    let framesLoaded = 0;
-    let currentFrame = 0;
-    let playing = false;
-    let lastTime = 0;
-    let reqId;
+    // We also use a minimum timeout so the loading screen doesn't just flash instantly
+    const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
 
-    const playLoop = (time) => {
-      if (!playing) return;
-      
-      if (!lastTime) lastTime = time;
-      const deltaTime = time - lastTime;
-      
-      // Control frame rate
-      if (deltaTime > 1000 / fps) {
-        currentFrame++;
-        lastTime = time;
-        
-        if (currentFrame >= frameCount) {
-          // Finished sequence!
-          playing = false;
-          setIsFadingOut(true);
-          setTimeout(() => {
-            if (onComplete) onComplete();
-          }, 800); // Wait for fade out animation
-          return;
-        }
+    const checkReady = () => {
+      if (isPreloadingDone) {
+        setIsReady(true);
       }
-
-      if (images[currentFrame]) {
-        drawFrame(ctx, images[currentFrame], canvas.width, canvas.height);
-      }
-      
-      reqId = requestAnimationFrame(playLoop);
     };
 
-    // Preload images
-    for (let i = 0; i < frameCount; i++) {
+    minTimePromise.then(() => {
+      // If network is very slow, we still show the button after 5 seconds if at least 10 frames loaded
+      if (loadedCount >= 10) {
+         isPreloadingDone = true;
+         checkReady();
+      }
+    });
+    
+    // Fallback: maximum wait time of 10 seconds
+    setTimeout(() => {
+      isPreloadingDone = true;
+      setProgress(100);
+      checkReady();
+    }, 10000);
+
+    for (let i = 0; i < framesToPreload; i++) {
       const img = new Image();
-      img.src = `https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/loading/frame_${i.toString().padStart(5, '0')}.webp`;
-      img.onload = () => {
-        images[i] = img;
-        framesLoaded++;
+      img.src = `https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/part1/frame_${i.toString().padStart(5, '0')}.webp`;
+      
+      const onImageLoad = () => {
+        loadedCount++;
+        const prog = Math.min(99, Math.round((loadedCount / framesToPreload) * 100));
+        setProgress(prog);
         
-        // Draw the first frame immediately once loaded
-        if (i === 0 && !playing) {
-           drawFrame(ctx, images[0], canvas.width, canvas.height);
-        }
-        
-        // Start playing when we have buffered just 3 frames (so it doesn't wait forever on slow networks)
-        if (framesLoaded === 3 && !playing) {
-           playing = true;
-           reqId = requestAnimationFrame(playLoop);
+        if (loadedCount >= framesToPreload) {
+          isPreloadingDone = true;
+          setProgress(100);
+          checkReady();
         }
       };
       
-      img.onerror = () => {
-        framesLoaded++;
-      };
+      img.onload = onImageLoad;
+      img.onerror = onImageLoad; // count errors too so we don't get stuck
     }
-    
-    // Fallback: If 3 frames don't load fast enough, start playing anyway after 1.5s
-    const fallbackTimeout = setTimeout(() => {
-      if (!playing) {
-        playing = true;
-        reqId = requestAnimationFrame(playLoop);
-      }
-    }, 1500);
+  }, []);
 
-    return () => {
-      window.removeEventListener('resize', resize);
-      playing = false;
-      clearTimeout(fallbackTimeout);
-      if (reqId) cancelAnimationFrame(reqId);
-    };
-  }, [onComplete]);
-
-  function drawFrame(ctx, img, w, h) {
-    if (!img?.naturalWidth) return;
-    const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
-    const nw = img.naturalWidth * scale;
-    const nh = img.naturalHeight * scale;
-    ctx.drawImage(img, (w - nw) / 2, (h - nh) / 2, nw, nh);
-  }
+  const handleStart = () => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      if (onComplete) onComplete();
+    }, 800);
+  };
 
   return (
-    <div 
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 99999,
-        backgroundColor: '#000',
-        opacity: isFadingOut ? 0 : 1,
-        transition: 'opacity 0.8s ease-in-out',
-        pointerEvents: 'none'
-      }}
-    >
-      <canvas 
-        ref={canvasRef} 
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'cover'
-        }} 
-      />
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: '#000',
+      opacity: isFadingOut ? 0 : 1, transition: 'opacity 0.8s ease-in-out',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      color: '#fff', fontFamily: '"Outfit", "Inter", sans-serif'
+    }}>
+      <h1 style={{ 
+        fontSize: '2.5rem', marginBottom: '30px', letterSpacing: '2px', fontWeight: '300',
+        background: 'linear-gradient(to right, #fff, #c8a97e)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
+      }}>
+        جاري تحضير العظمة...
+      </h1>
+      
+      <div style={{ width: '300px', height: '2px', backgroundColor: '#222', marginBottom: '40px', position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: '#c8a97e',
+          width: `${progress}%`, transition: 'width 0.3s ease-out', boxShadow: '0 0 10px #c8a97e'
+        }} />
+      </div>
+
+      <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {isReady ? (
+          <button 
+            onClick={handleStart}
+            style={{
+              padding: '15px 40px', fontSize: '1.2rem', backgroundColor: '#c8a97e', color: '#000',
+              border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold',
+              letterSpacing: '1px', transition: 'all 0.3s ease',
+              boxShadow: '0 0 20px rgba(200, 169, 126, 0.4)'
+            }}
+            onMouseOver={(e) => {
+              e.currentTarget.style.transform = 'scale(1.05)';
+              e.currentTarget.style.boxShadow = '0 0 30px rgba(200, 169, 126, 0.6)';
+            }}
+            onMouseOut={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 0 20px rgba(200, 169, 126, 0.4)';
+            }}
+          >
+            ابدأ العظمة
+          </button>
+        ) : (
+          <span style={{ color: '#888', fontSize: '1.1rem', letterSpacing: '3px' }}>{progress}%</span>
+        )}
+      </div>
     </div>
   );
 }
