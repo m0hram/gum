@@ -9,49 +9,61 @@ export default function LoadingScreen({ onComplete }) {
   const frameCount = 120;
   const fps = 30;
   const videoImagesRef = useRef(new Array(frameCount));
-  const framesLoadedRef = useRef(0);
 
   useEffect(() => {
-    let loadedCount = 0;
+    const supabaseBase = 'https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images';
     
-    for (let i = 0; i < frameCount; i++) {
+    const generateFrames = (folder, count) => {
+      return Array.from({length: count}, (_, i) => ({
+         url: `${supabaseBase}/${folder}/frame_${i.toString().padStart(5, '0')}.webp`,
+         isLoader: folder === 'loading',
+         idx: i
+      }));
+    };
+
+    // WE PRELOAD ABSOLUTELY EVERYTHING BEFORE STARTING, AS REQUESTED
+    const assets = [
+      ...generateFrames('loading', 120),
+      ...generateFrames('part1', 171),
+      ...generateFrames('part2', 151),
+      ...generateFrames('part3', 128),
+      ...generateFrames('part4', 120),
+      { url: `${supabaseBase}/1.png`, isLoader: false },
+      { url: `${supabaseBase}/2.png`, isLoader: false }
+    ];
+    
+    const totalFrames = assets.length;
+    let loaded = 0;
+    let index = 0;
+    const concurrency = 20; // Fast parallel downloading
+
+    const loadNext = () => {
+      if (index >= totalFrames) return;
+      const asset = assets[index++];
       const img = new Image();
-      img.src = `https://xqqkugtpmxmtmadfjyua.supabase.co/storage/v1/object/public/images/loading/frame_${i.toString().padStart(5, '0')}.webp`;
+      img.src = asset.url;
       
-      const onImageLoad = () => {
-        videoImagesRef.current[i] = img;
-        loadedCount++;
-        framesLoadedRef.current = loadedCount;
+      const onDone = () => {
+        if (asset.isLoader) {
+          videoImagesRef.current[asset.idx] = img;
+        }
+        loaded++;
+        setProgress(Math.floor((loaded / totalFrames) * 100));
         
-        const targetFrames = 30; // buffer 30 frames to be ready
-        const prog = Math.min(100, Math.round((loadedCount / targetFrames) * 100));
-        setProgress(prog);
+        if (loaded >= totalFrames) {
+          setStage('ready');
+        } else {
+          loadNext();
+        }
       };
       
-      img.onload = onImageLoad;
-      img.onerror = onImageLoad;
+      img.onload = onDone;
+      img.onerror = onDone;
+    };
+
+    for (let i = 0; i < concurrency; i++) {
+      loadNext();
     }
-
-    const minTimePromise = new Promise(resolve => setTimeout(resolve, 2000));
-    const maxTimePromise = new Promise(resolve => setTimeout(resolve, 8000));
-
-    const checkInterval = setInterval(() => {
-      setStage(currentStage => {
-        if (currentStage !== 'preloading') return currentStage;
-        if (framesLoadedRef.current >= 30) {
-           clearInterval(checkInterval);
-           return 'ready';
-        }
-        return currentStage;
-      });
-    }, 500);
-
-    maxTimePromise.then(() => {
-       clearInterval(checkInterval);
-       setStage(current => current === 'preloading' ? 'ready' : current);
-    });
-
-    return () => clearInterval(checkInterval);
   }, []);
 
   const handleStart = () => {
@@ -118,52 +130,67 @@ export default function LoadingScreen({ onComplete }) {
 
   return (
     <div style={{
-      position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: '#000',
+      position: 'fixed', inset: 0, zIndex: 99999, backgroundColor: '#030303',
       opacity: isFadingOut ? 0 : 1, transition: 'opacity 0.8s ease-in-out',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       color: '#fff', fontFamily: '"Outfit", "Inter", sans-serif'
     }}>
+      {/* Background ambient glow */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: '50vw', height: '50vw', background: 'radial-gradient(circle, rgba(255,26,26,0.12) 0%, transparent 60%)',
+        pointerEvents: 'none', zIndex: 0
+      }} />
+
       {stage !== 'playing' && (
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center'
-        }}>
-          <h1 style={{ 
-            fontSize: '2.5rem', marginBottom: '30px', letterSpacing: '2px', fontWeight: '300',
-            background: 'linear-gradient(to right, #ff4d4d, #ff1a1a)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'
-          }}>
-            جاري تحضير العظمة...
-          </h1>
+        <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           
-          <div style={{ width: '300px', height: '2px', backgroundColor: '#222', marginBottom: '40px', position: 'relative', overflow: 'hidden' }}>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: '#ff1a1a',
-              width: `${progress}%`, transition: 'width 0.3s ease-out', boxShadow: '0 0 10px #ff1a1a'
-            }} />
+          {/* Huge Hollow Text that fills with Red */}
+          <div style={{ 
+            fontFamily: '"Bebas Neue", sans-serif', fontSize: 'clamp(120px, 18vw, 250px)', lineHeight: 0.85,
+            color: 'transparent', WebkitTextStroke: '1px rgba(255, 26, 26, 0.3)',
+            position: 'relative', letterSpacing: '0.05em', userSelect: 'none'
+          }}>
+            {progress.toString().padStart(3, '0')}
+            <span style={{ 
+              position: 'absolute', top: 0, left: 0, color: '#ff1a1a', WebkitTextStroke: '0px',
+              clipPath: `inset(${(100 - progress)}% 0 0 0)`, transition: 'clip-path 0.3s ease-out',
+              textShadow: '0 0 40px rgba(255,26,26,0.5)'
+            }}>
+              {progress.toString().padStart(3, '0')}
+            </span>
           </div>
 
-          <div style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {stage === 'ready' ? (
+          <div style={{ 
+            fontFamily: '"Inter", sans-serif', fontSize: '0.75rem', letterSpacing: '0.6em',
+            color: '#fff', marginTop: '40px', textTransform: 'uppercase',
+            opacity: 0.8
+          }}>
+            {stage === 'ready' ? 'VISION FULLY RENDERED' : 'CRAFTING THE EXPERIENCE...'}
+          </div>
+
+          <div style={{ height: '80px', marginTop: '30px', display: 'flex', alignItems: 'center' }}>
+            {stage === 'ready' && (
               <button 
                 onClick={handleStart}
                 style={{
-                  padding: '15px 40px', fontSize: '1.2rem', backgroundColor: '#ff1a1a', color: '#fff',
-                  border: 'none', borderRadius: '30px', cursor: 'pointer', fontWeight: 'bold',
-                  letterSpacing: '1px', transition: 'all 0.3s ease',
-                  boxShadow: '0 0 20px rgba(255, 26, 26, 0.4)'
+                  padding: '16px 45px', fontSize: '1rem', backgroundColor: '#ff1a1a', color: '#fff',
+                  border: 'none', borderRadius: '100px', cursor: 'pointer', fontWeight: '600',
+                  letterSpacing: '0.25em', transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+                  boxShadow: '0 0 30px rgba(255, 26, 26, 0.3), inset 0 0 10px rgba(255,255,255,0.1)',
+                  textTransform: 'uppercase'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'scale(1.05)';
-                  e.currentTarget.style.boxShadow = '0 0 30px rgba(255, 26, 26, 0.6)';
+                  e.currentTarget.style.transform = 'scale(1.05) translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 0 40px rgba(255, 26, 26, 0.6), inset 0 0 15px rgba(255,255,255,0.2)';
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'scale(1)';
-                  e.currentTarget.style.boxShadow = '0 0 20px rgba(255, 26, 26, 0.4)';
+                  e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(255, 26, 26, 0.3), inset 0 0 10px rgba(255,255,255,0.1)';
                 }}
               >
-                ابدأ العظمة
+                اكتشف التجربة
               </button>
-            ) : (
-              <span style={{ color: '#ff1a1a', fontSize: '1.1rem', letterSpacing: '3px' }}>{progress}%</span>
             )}
           </div>
         </div>
@@ -172,7 +199,7 @@ export default function LoadingScreen({ onComplete }) {
       {stage === 'playing' && (
         <canvas 
           ref={canvasRef} 
-          style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+          style={{ width: '100%', height: '100%', objectFit: 'cover', position: 'relative', zIndex: 20 }} 
         />
       )}
     </div>
